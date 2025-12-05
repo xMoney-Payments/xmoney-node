@@ -3,9 +3,19 @@ import { Pagination } from '../types';
 
 export interface Customer {
   id: number;
+  siteId?: number;
   identifier: string;
   email: string;
-  // Add other fields as per spec
+  firstName?: string;
+  lastName?: string;
+  country?: string;
+  state?: string;
+  city?: string;
+  zipCode?: string;
+  address?: string;
+  phone?: string;
+  creationDate?: string;
+  creationTimestamp?: number;
 }
 
 export interface CustomerCreateRequest {

@@ -3,7 +3,37 @@ import { Pagination } from '../types';
 
 export interface Transaction {
   id: number;
-  // Add other fields as per spec
+  siteId?: number;
+  externalOrderId?: string;
+  amount: number;
+  currency: string;
+  originalAmount?: number;
+  originalCurrency?: string;
+  refundedAmount?: number;
+  description?: string;
+  customerCountry?: string;
+  creationDate?: string;
+  creationTimestamp?: number;
+  transactionSource?: string;
+  cardProviderId?: number;
+  cardProvider?: string;
+  cardProviderName?: string;
+  cardHolderName?: string;
+  cardHolderCountry?: string;
+  cardHolderState?: string;
+  cardType?: string;
+  cardNumber?: string;
+  cardExpiryDate?: string;
+  email?: string;
+  cardId?: number;
+  cardStatus?: string;
+  backUrl?: string;
+  cardDescriptor?: string;
+  externalCustomData?: string;
+  fraudScore?: number;
+  transactionOption?: string;
+  splitStatus?: string;
+  relatedTransactionIds?: number[];
 }
 
 export interface TransactionListParams {
@@ -14,13 +44,13 @@ export interface TransactionListParams {
   currency?: string;
   amountFrom?: number;
   amountTo?: number;
-  transactionType?: string;
+  transactionType?: 'deposit' | 'refund' | 'credit' | 'chargeback' | 'representment';
   transactionStatus?: string[];
-  dateType?: string;
+  dateType?: 'creation' | 'approval' | 'refund' | 'cancellation' | 'charge-back';
   createdAtFrom?: string;
   createdAtTo?: string;
   source?: string[];
-  cardType?: string;
+  cardType?: 'visa' | 'mastercard' | 'maestro';
   cardNumber?: string;
   country?: string;
   page?: number;
@@ -34,12 +64,12 @@ export interface TransactionCaptureRequest {
 
 export interface TransactionRefundRequest {
   reason?:
-    | 'fraud-confirm'
-    | 'highly-suspicious'
-    | 'duplicated-transaction'
-    | 'customer-demand'
-    | 'test-transaction'
-    | 'card-expired';
+  | 'fraud-confirm'
+  | 'highly-suspicious'
+  | 'duplicated-transaction'
+  | 'customer-demand'
+  | 'test-transaction'
+  | 'card-expired';
   message?: string;
   amount?: number;
 }

@@ -1,9 +1,29 @@
 import { XMoneyResource } from '../XMoneyResource';
 import { Pagination } from '../types';
 
+export interface BinInfo {
+  bin: string;
+  brand?: string;
+  type?: string;
+  level?: string;
+  countryCode?: string;
+  bank?: string;
+}
+
 export interface Card {
   id: number;
-  // Add other fields as per spec
+  customerId: number;
+  type?: string;
+  cardNumber?: string;
+  expiryMonth?: string;
+  expiryYear?: string;
+  nameOnCard?: string;
+  cardHolderCountry?: string;
+  cardHolderState?: string;
+  cardProvider?: string;
+  hasToken?: boolean;
+  cardStatus?: string;
+  binInfo?: BinInfo;
 }
 
 export interface CardListParams {

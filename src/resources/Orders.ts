@@ -4,7 +4,7 @@ import { Pagination } from '../types';
 export interface OrderCreateRequest {
   amount: number;
   currency: string;
-  orderType: 'purchase' | 'recurring' | 'managed' | 'credit';
+  orderType: 'purchase' | 'recurring' | 'managed';
   customerId: number;
   siteId?: number;
   description?: string;
@@ -15,8 +15,8 @@ export interface OrderCreateRequest {
   trialAmount?: number;
   firstBillDate?: string;
   backUrl?: string;
-  transactionMethod?: 'card' | 'wallet';
-  cardTransactionMode?: 'auth' | 'authAndCapture' | 'credit';
+  transactionMethod?: 'card';
+  cardTransactionMode?: 'auth' | 'authAndCapture';
   cardId?: number;
   cardNumber?: string;
   cardExpiryDate?: string;
@@ -38,17 +38,29 @@ export interface OrderRebillRequest {
   transactionOption?: string;
 }
 
+export interface OrderCancelParams {
+  reason?: 'fraud-confirm' | 'highly-suspicious' | 'duplicated-transaction' | 'customer-demand' | 'test-transaction';
+  message?: string;
+  terminateOrder?: 'yes';
+}
+
 export interface Order {
   id: number;
   siteId: number;
+  customerId: number;
   externalOrderId?: string;
   orderType: string;
+  orderStatus: string;
   amount: number;
   currency: string;
-  status: string;
-  created: string;
-  updated: string;
-  // Add other fields as per spec
+  description?: string;
+  invoiceEmail?: string;
+  createdAt: string;
+  intervalType?: 'day' | 'month';
+  intervalValue?: number;
+  retryPayment?: string;
+  nextDueDate?: string;
+  transactionMethod?: string;
 }
 
 export interface OrderListParams {
@@ -82,10 +94,10 @@ export class Orders extends XMoneyResource {
   }
 
   public async rebill(id: number, data: OrderRebillRequest): Promise<Order> {
-    return this.client.request<Order>('POST', `/order-rebill/${id}`, data);
+    return this.client.request<Order>('PATCH', `/order-rebill/${id}`, data);
   }
 
-  public async cancel(id: number): Promise<void> {
-    return this.client.request<void>('DELETE', `/order/${id}`);
+  public async cancel(id: number, params?: OrderCancelParams): Promise<void> {
+    return this.client.request<void>('DELETE', `/order/${id}`, params);
   }
 }
