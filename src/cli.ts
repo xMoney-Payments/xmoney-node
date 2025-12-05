@@ -3,8 +3,12 @@ import { Command } from 'commander';
 import { highlight } from 'cli-highlight';
 import { XMoney } from './XMoney';
 import { LIVE_ENV, TEST_ENV } from './constants';
+import { isValidSecretKey } from './utils';
 
-const printJson = (data: any) => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type CommandOptions = any;
+
+const printJson = (data: unknown) => {
   console.log(highlight(JSON.stringify(data, null, 2), { language: 'json', ignoreIllegals: true }));
 };
 
@@ -15,7 +19,7 @@ program
   .description('xMoney Node.js SDK CLI')
   .version('1.0.0')
   .requiredOption('--secret-key <key>', 'xMoney Secret Key', (value) => {
-    if (!new RegExp(`^sk_(${TEST_ENV}|${LIVE_ENV})_`).test(value)) {
+    if (!isValidSecretKey(value)) {
       console.error(
         `error: option '--secret-key <key>' argument '${value}' is invalid. It must start with 'sk_${TEST_ENV}_' or 'sk_${LIVE_ENV}_'.`,
       );
@@ -24,15 +28,17 @@ program
     return value;
   });
 
-const createAction = (action: (client: XMoney, options: any) => Promise<void>) => {
-  return async (options: any) => {
+const createAction = (action: (client: XMoney, options: CommandOptions) => Promise<void>) => {
+  return async (options: CommandOptions) => {
     const secretKey = program.opts().secretKey;
     const client = new XMoney(secretKey);
 
     try {
       await action(client, options);
-    } catch (error: any) {
-      printJson(error.raw || error);
+    } catch (error: unknown) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const err = error as any;
+      printJson(err.raw || err);
       process.exit(1);
     }
   };
@@ -45,7 +51,7 @@ const addPaginationOptions = (command: Command) => {
     .option('--reverse-sorting <0|1>', 'Sort order (0: oldest to newest, 1: newest to oldest)');
 };
 
-const getPaginationParams = (options: any) => {
+const getPaginationParams = (options: CommandOptions) => {
   return {
     page: parseInt(options.page, 10),
     perPage: options.perPage ? parseInt(options.perPage, 10) : undefined,

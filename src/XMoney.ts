@@ -17,6 +17,7 @@ import {
   LIVE_ENV_API_URL,
   TEST_ENV_API_URL,
 } from './constants';
+import { isValidSecretKey } from './utils';
 
 export class XMoney {
   private readonly client: AxiosInstance;
@@ -44,7 +45,7 @@ export class XMoney {
 
     this.secretKey = secretKey;
 
-    if (!new RegExp(`^sk_(${TEST_ENV}|${LIVE_ENV})_`).test(this.secretKey)) {
+    if (!isValidSecretKey(this.secretKey)) {
       throw new Error(
         `Invalid secret key. It must start with 'sk_${TEST_ENV}_' or 'sk_${LIVE_ENV}_'.`,
       );

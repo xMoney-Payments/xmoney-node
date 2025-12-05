@@ -1,4 +1,14 @@
 import * as crypto from 'crypto';
+import { LIVE_ENV, TEST_ENV } from './constants';
+
+/**
+ * Validates the secret key format.
+ * @param key The secret key to validate.
+ * @returns True if the key is valid, false otherwise.
+ */
+export function isValidSecretKey(key: string): boolean {
+  return new RegExp(`^sk_(${TEST_ENV}|${LIVE_ENV})_`).test(key);
+}
 
 /**
  * Encodes the order data to a Base64 JSON string.
