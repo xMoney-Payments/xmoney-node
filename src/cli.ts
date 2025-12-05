@@ -38,22 +38,37 @@ const createAction = (action: (client: XMoney, options: any) => Promise<void>) =
   };
 };
 
+const addPaginationOptions = (command: Command) => {
+  return command
+    .option('--page <number>', 'Page number', '1')
+    .option('--per-page <number>', 'Items per page')
+    .option('--reverse-sorting <0|1>', 'Sort order (0: oldest to newest, 1: newest to oldest)');
+};
+
+const getPaginationParams = (options: any) => {
+  return {
+    page: parseInt(options.page, 10),
+    perPage: options.perPage ? parseInt(options.perPage, 10) : undefined,
+    reverseSorting: options.reverseSorting !== undefined ? options.reverseSorting === '1' : undefined,
+  };
+};
+
 const cards = program.command('cards').description('Manage cards');
 
-cards
-  .command('list')
-  .description('List cards')
-  .requiredOption('--customer-id <id>', 'Customer ID')
-  .option('--page <number>', 'Page number', '1')
-  .action(
-    createAction(async (client, options) => {
-      const result = await client.cards.list({
-        customerId: parseInt(options.customerId, 10),
-        page: parseInt(options.page, 10),
-      });
-      printJson(result);
-    }),
-  );
+addPaginationOptions(
+  cards
+    .command('list')
+    .description('List cards')
+    .requiredOption('--customer-id <id>', 'Customer ID'),
+).action(
+  createAction(async (client, options) => {
+    const result = await client.cards.list({
+      customerId: parseInt(options.customerId, 10),
+      ...getPaginationParams(options),
+    });
+    printJson(result);
+  }),
+);
 
 cards
   .command('retrieve')
@@ -83,18 +98,19 @@ cards
 
 const orders = program.command('orders').description('Manage orders');
 
-orders
-  .command('list')
-  .description('List orders')
-  .option('--customer-id <id>', 'Customer ID')
-  .option('--page <number>', 'Page number', '1')
+addPaginationOptions(
+  orders
+    .command('list')
+    .description('List orders')
+    .option('--customer-id <id>', 'Customer ID'),
+)
   .option('--status <status>', 'Order status')
   .option('--type <type>', 'Order type')
   .action(
     createAction(async (client, options) => {
       const result = await client.orders.list({
         customerId: options.customerId ? parseInt(options.customerId, 10) : undefined,
-        page: parseInt(options.page, 10),
+        ...getPaginationParams(options),
         orderStatus: options.status,
         orderType: options.type,
       });
@@ -161,20 +177,17 @@ orders
 
 const customers = program.command('customers').description('Manage customers');
 
-customers
-  .command('list')
-  .description('List customers')
-  .option('--email <email>', 'Email')
-  .option('--page <number>', 'Page number', '1')
-  .action(
-    createAction(async (client, options) => {
-      const result = await client.customers.list({
-        email: options.email,
-        page: parseInt(options.page, 10),
-      });
-      printJson(result);
-    }),
-  );
+addPaginationOptions(
+  customers.command('list').description('List customers').option('--email <email>', 'Email'),
+).action(
+  createAction(async (client, options) => {
+    const result = await client.customers.list({
+      email: options.email,
+      ...getPaginationParams(options),
+    });
+    printJson(result);
+  }),
+);
 
 customers
   .command('retrieve')
@@ -237,22 +250,22 @@ customers
 
 const transactions = program.command('transactions').description('Manage transactions');
 
-transactions
-  .command('list')
-  .description('List transactions')
-  .option('--order-id <id>', 'Order ID')
-  .option('--customer-id <id>', 'Customer ID')
-  .option('--page <number>', 'Page number', '1')
-  .action(
-    createAction(async (client, options) => {
-      const result = await client.transactions.list({
-        orderId: options.orderId ? parseInt(options.orderId, 10) : undefined,
-        customerId: options.customerId ? parseInt(options.customerId, 10) : undefined,
-        page: parseInt(options.page, 10),
-      });
-      printJson(result);
-    }),
-  );
+addPaginationOptions(
+  transactions
+    .command('list')
+    .description('List transactions')
+    .option('--order-id <id>', 'Order ID')
+    .option('--customer-id <id>', 'Customer ID'),
+).action(
+  createAction(async (client, options) => {
+    const result = await client.transactions.list({
+      orderId: options.orderId ? parseInt(options.orderId, 10) : undefined,
+      customerId: options.customerId ? parseInt(options.customerId, 10) : undefined,
+      ...getPaginationParams(options),
+    });
+    printJson(result);
+  }),
+);
 
 transactions
   .command('retrieve')
