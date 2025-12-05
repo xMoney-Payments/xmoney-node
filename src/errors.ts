@@ -1,19 +1,31 @@
-interface XMoneyErrorRaw {
-  message?: string;
-  statusCode?: number;
+export type XMoneyErrorType = 'Validation' | 'Exception';
+
+export interface XMoneyErrorItem {
+  code: number;
+  message: string;
+  type: XMoneyErrorType;
+  field?: string;
+}
+
+export interface XMoneyAPIErrorResponse {
+  code: number;
+  message: string;
+  errors: XMoneyErrorItem[];
   [key: string]: unknown;
 }
 
 export class XMoneyError extends Error {
   readonly type: string;
-  readonly raw: XMoneyErrorRaw;
+  readonly raw: unknown;
   readonly statusCode?: number;
+  readonly errors?: XMoneyErrorItem[];
 
-  constructor(raw: XMoneyErrorRaw = {}) {
+  constructor(raw: Partial<XMoneyAPIErrorResponse> = {}) {
     super(raw.message || 'Unknown Error');
     this.type = this.constructor.name;
+    this.statusCode = raw.code;
+    this.errors = raw.errors;
     this.raw = raw;
-    this.statusCode = raw.statusCode;
   }
 }
 

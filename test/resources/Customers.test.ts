@@ -1,5 +1,6 @@
 import { XMoney } from '../../src/XMoney';
 import { Customers } from '../../src/resources/Customers';
+import { InvalidRequestError, APIError } from '../../src/errors';
 
 describe('Customers Resource', () => {
     let sdk: XMoney;
@@ -22,6 +23,45 @@ describe('Customers Resource', () => {
             await customers.create(data);
 
             expect(sdk.request).toHaveBeenCalledWith('POST', '/customer', data);
+        });
+
+        it('should throw InvalidRequestError when validation fails', async () => {
+            const data = { identifier: 'cust_123', email: 'invalid-email' };
+            const errorResponse = new InvalidRequestError({
+                code: 400,
+                message: 'Bad Request',
+                errors: [{
+                    code: 1651,
+                    message: 'Invalid email address provided',
+                    type: 'Validation',
+                    field: 'email'
+                }]
+            });
+
+            (sdk as any).request.mockRejectedValue(errorResponse);
+
+            await expect(customers.create(data)).rejects.toThrow(InvalidRequestError);
+        });
+
+        it('should throw APIError when customer already exists', async () => {
+            const data = { identifier: 'cust_123', email: 'test@example.com' };
+            // Use 409 Conflict scenario, potentially mapped to APIError or a specific ConflictError if it existed.
+            // Based on current errors.ts, 409 usually falls back to generic APIError or we can use InvalidRequestError if API semantics imply it.
+            // Let's assume generic logic maps it to APIError if not 400/401. 
+            // Actually, the default handleError (implied) usually maps unknown status to APIError.
+            const errorResponse = new APIError({
+                code: 409,
+                message: 'Conflict',
+                errors: [{
+                    code: 1627,
+                    message: 'Customer already exists',
+                    type: 'Exception'
+                }]
+            });
+
+            (sdk as any).request.mockRejectedValue(errorResponse);
+
+            await expect(customers.create(data)).rejects.toThrow(APIError);
         });
     });
 
