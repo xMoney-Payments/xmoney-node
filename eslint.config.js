@@ -40,5 +40,32 @@ module.exports = [
     },
     {
         ignores: ["dist/", "node_modules/"]
+    },
+    {
+        files: ["test/**/*.ts"],
+        languageOptions: {
+            parser: typescriptEslintParser,
+            parserOptions: {
+                ecmaVersion: 2020,
+                sourceType: "module",
+            },
+            globals: {
+                ...globals.node,
+                ...globals.jest
+            }
+        },
+        plugins: {
+            "@typescript-eslint": typescriptEslintPlugin,
+        },
+        rules: {
+            ...typescriptEslintPlugin.configs.recommended.rules,
+            "@typescript-eslint/no-explicit-any": "off",
+            "@typescript-eslint/no-unused-vars": [
+                "error",
+                {
+                    "argsIgnorePattern": "^_"
+                }
+            ]
+        },
     }
 ];

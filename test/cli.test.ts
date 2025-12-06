@@ -17,6 +17,9 @@ describe('CLI', () => {
 
     beforeEach(() => {
         jest.clearAllMocks();
+        mockConsoleLog.mockClear();
+        mockConsoleError.mockClear();
+        mockExit.mockClear();
         mockClient = {
             cards: {
                 list: jest.fn().mockResolvedValue({ data: [], pagination: {} }),
@@ -48,7 +51,6 @@ describe('CLI', () => {
     });
 
     afterEach(() => {
-
     });
 
     const runCommand = async (args: string[]) => {
