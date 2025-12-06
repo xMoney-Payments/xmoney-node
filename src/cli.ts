@@ -16,7 +16,7 @@ const program = new Command();
 program
   .name('xmoney')
   .description('xMoney Node.js SDK CLI')
-  .version('1.0.0')
+  .version('1.1.0')
   .requiredOption('--secret-key <key>', 'xMoney Secret Key', (value) => {
     if (!isValidSecretKey(value)) {
       console.error(
