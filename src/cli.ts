@@ -1,12 +1,11 @@
 #!/usr/bin/env node
-import { Command } from 'commander';
+import { Command, OptionValues } from 'commander';
 import { highlight } from 'cli-highlight';
 import { XMoney } from './XMoney';
 import { LIVE_ENV, TEST_ENV } from './constants';
 import { isValidSecretKey } from './utils';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type CommandOptions = any;
+type CommandOptions = OptionValues;
 
 const printJson = (data: unknown) => {
   console.log(highlight(JSON.stringify(data, null, 2), { language: 'json', ignoreIllegals: true }));
@@ -36,9 +35,12 @@ const createAction = (action: (client: XMoney, options: CommandOptions) => Promi
     try {
       await action(client, options);
     } catch (error: unknown) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const err = error as any;
-      printJson(err.raw || err);
+      if (error instanceof Error && 'raw' in error) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        printJson((error as any).raw);
+      } else {
+        printJson(error);
+      }
       process.exit(1);
     }
   };
@@ -65,11 +67,17 @@ addPaginationOptions(
   cards
     .command('list')
     .description('List cards')
-    .requiredOption('--customer-id <id>', 'Customer ID'),
+    .requiredOption('--customer-id <id>', 'Customer ID')
+    .option('--order-id <id>', 'Order ID')
+    .option('--has-token <yes|no>', 'Has token')
+    .option('--card-status <status>', 'Card status (all, deleted)'),
 ).action(
   createAction(async (client, options) => {
     const result = await client.cards.list({
       customerId: parseInt(options.customerId, 10),
+      orderId: options.orderId ? parseInt(options.orderId, 10) : undefined,
+      hasToken: options.hasToken,
+      cardStatus: options.cardStatus,
       ...getPaginationParams(options),
     });
     printJson(result);
@@ -108,21 +116,28 @@ addPaginationOptions(
   orders
     .command('list')
     .description('List orders')
-    .option('--customer-id <id>', 'Customer ID'),
-)
-  .option('--status <status>', 'Order status')
-  .option('--type <type>', 'Order type')
-  .action(
-    createAction(async (client, options) => {
-      const result = await client.orders.list({
-        customerId: options.customerId ? parseInt(options.customerId, 10) : undefined,
-        ...getPaginationParams(options),
-        orderStatus: options.status,
-        orderType: options.type,
-      });
-      printJson(result);
-    }),
-  );
+    .option('--customer-id <id>', 'Customer ID')
+    .option('--external-order-id <id>', 'External Order ID')
+    .option('--status <status>', 'Order status')
+    .option('--type <type>', 'Order type')
+    .option('--reason <reason>', 'Reason')
+    .option('--created-at-from <date>', 'Created at from')
+    .option('--created-at-to <date>', 'Created at to'),
+).action(
+  createAction(async (client, options) => {
+    const result = await client.orders.list({
+      customerId: options.customerId ? parseInt(options.customerId, 10) : undefined,
+      externalOrderId: options.externalOrderId,
+      orderStatus: options.status,
+      orderType: options.type,
+      reason: options.reason,
+      createdAtFrom: options.createdAtFrom,
+      createdAtTo: options.createdAtTo,
+      ...getPaginationParams(options),
+    });
+    printJson(result);
+  }),
+);
 
 orders
   .command('retrieve')
@@ -142,6 +157,21 @@ orders
   .requiredOption('--amount <amount>', 'Amount')
   .requiredOption('--currency <currency>', 'Currency')
   .requiredOption('--type <type>', 'Order type (purchase, recurring)')
+  .option('--site-id <id>', 'Site ID')
+  .option('--description <text>', 'Description')
+  .option('--external-order-id <id>', 'External Order ID')
+  .option('--interval-type <type>', 'Interval type (day, month)')
+  .option('--interval-value <value>', 'Interval value')
+  .option('--retry-payment <value>', 'Retry payment')
+  .option('--trial-amount <amount>', 'Trial amount')
+  .option('--first-bill-date <date>', 'First bill date')
+  .option('--back-url <url>', 'Back URL')
+  .option('--card-number <number>', 'Card number')
+  .option('--card-expiry-date <date>', 'Card expiry date')
+  .option('--card-cvv <cvv>', 'Card CVV')
+  .option('--card-holder-name <name>', 'Card holder name')
+  .option('--save-card', 'Save card')
+  .option('--invoice-email <email>', 'Invoice email')
   .action(
     createAction(async (client, options) => {
       const order = await client.orders.create({
@@ -149,6 +179,21 @@ orders
         amount: parseFloat(options.amount),
         currency: options.currency,
         orderType: options.type,
+        siteId: options.siteId ? parseInt(options.siteId, 10) : undefined,
+        description: options.description,
+        externalOrderId: options.externalOrderId,
+        intervalType: options.intervalType,
+        intervalValue: options.intervalValue ? parseInt(options.intervalValue, 10) : undefined,
+        retryPayment: options.retryPayment,
+        trialAmount: options.trialAmount ? parseFloat(options.trialAmount) : undefined,
+        firstBillDate: options.firstBillDate,
+        backUrl: options.backUrl,
+        cardNumber: options.cardNumber,
+        cardExpiryDate: options.cardExpiryDate,
+        cardCvv: options.cardCvv,
+        cardHolderName: options.cardHolderName,
+        saveCard: options.saveCard,
+        invoiceEmail: options.invoiceEmail,
       });
       printJson(order);
     }),
@@ -158,9 +203,16 @@ orders
   .command('cancel')
   .description('Cancel an order')
   .requiredOption('--id <id>', 'Order ID')
+  .option('--reason <reason>', 'Reason')
+  .option('--message <message>', 'Message')
+  .option('--terminate-order <yes>', 'Terminate order (yes)')
   .action(
     createAction(async (client, options) => {
-      await client.orders.cancel(parseInt(options.id, 10));
+      await client.orders.cancel(parseInt(options.id, 10), {
+        reason: options.reason,
+        message: options.message,
+        terminateOrder: options.terminateOrder,
+      });
       console.log('Order canceled successfully');
     }),
   );
@@ -171,11 +223,13 @@ orders
   .requiredOption('--id <id>', 'Order ID')
   .requiredOption('--customer-id <id>', 'Customer ID')
   .requiredOption('--amount <amount>', 'Amount')
+  .option('--transaction-option <option>', 'Transaction Option')
   .action(
     createAction(async (client, options) => {
       const result = await client.orders.rebill(parseInt(options.id, 10), {
         customerId: parseInt(options.customerId, 10),
         amount: parseFloat(options.amount),
+        transactionOption: options.transactionOption,
       });
       printJson(result);
     }),
@@ -184,11 +238,22 @@ orders
 const customers = program.command('customers').description('Manage customers');
 
 addPaginationOptions(
-  customers.command('list').description('List customers').option('--email <email>', 'Email'),
+  customers
+    .command('list')
+    .description('List customers')
+    .option('--email <email>', 'Email')
+    .option('--identifier <identifier>', 'Identifier')
+    .option('--country <country>', 'Country')
+    .option('--created-at-from <date>', 'Created at from')
+    .option('--created-at-to <date>', 'Created at to'),
 ).action(
   createAction(async (client, options) => {
     const result = await client.customers.list({
       email: options.email,
+      identifier: options.identifier,
+      country: options.country,
+      createdAtFrom: options.createdAtFrom,
+      createdAtTo: options.createdAtTo,
       ...getPaginationParams(options),
     });
     printJson(result);
@@ -213,6 +278,12 @@ customers
   .requiredOption('--email <email>', 'Email')
   .option('--first-name <name>', 'First name')
   .option('--last-name <name>', 'Last name')
+  .option('--country <country>', 'Country')
+  .option('--state <state>', 'State')
+  .option('--city <city>', 'City')
+  .option('--zip-code <code>', 'Zip Code')
+  .option('--address <address>', 'Address')
+  .option('--phone <phone>', 'Phone')
   .action(
     createAction(async (client, options) => {
       const customer = await client.customers.create({
@@ -220,6 +291,12 @@ customers
         email: options.email,
         firstName: options.firstName,
         lastName: options.lastName,
+        country: options.country,
+        state: options.state,
+        city: options.city,
+        zipCode: options.zipCode,
+        address: options.address,
+        phone: options.phone,
       });
       printJson(customer);
     }),
@@ -230,14 +307,28 @@ customers
   .description('Update a customer')
   .requiredOption('--id <id>', 'Customer ID')
   .option('--email <email>', 'Email')
+  .option('--identifier <identifier>', 'Identifier')
   .option('--first-name <name>', 'First name')
   .option('--last-name <name>', 'Last name')
+  .option('--address <address>', 'Address')
+  .option('--city <city>', 'City')
+  .option('--country <country>', 'Country')
+  .option('--state <state>', 'State')
+  .option('--zip-code <code>', 'Zip Code')
+  .option('--phone <phone>', 'Phone')
   .action(
     createAction(async (client, options) => {
       const customer = await client.customers.update(parseInt(options.id, 10), {
         email: options.email,
+        identifier: options.identifier,
         firstName: options.firstName,
         lastName: options.lastName,
+        address: options.address,
+        city: options.city,
+        country: options.country,
+        state: options.state,
+        zipCode: options.zipCode,
+        phone: options.phone,
       });
       printJson(customer);
     }),
@@ -261,12 +352,40 @@ addPaginationOptions(
     .command('list')
     .description('List transactions')
     .option('--order-id <id>', 'Order ID')
-    .option('--customer-id <id>', 'Customer ID'),
+    .option('--customer-id <id>', 'Customer ID')
+    .option('--email <email>', 'Email')
+    .option('--transaction-method <method>', 'Transaction method')
+    .option('--currency <currency>', 'Currency')
+    .option('--amount-from <amount>', 'Amount from')
+    .option('--amount-to <amount>', 'Amount to')
+    .option('--transaction-type <type>', 'Transaction type')
+    .option('--transaction-status <status...>', 'Transaction status')
+    .option('--date-type <type>', 'Date type')
+    .option('--created-at-from <date>', 'Created at from')
+    .option('--created-at-to <date>', 'Created at to')
+    .option('--source <source...>', 'Source')
+    .option('--card-type <type>', 'Card type')
+    .option('--card-number <number>', 'Card number')
+    .option('--country <country>', 'Country'),
 ).action(
   createAction(async (client, options) => {
     const result = await client.transactions.list({
       orderId: options.orderId ? parseInt(options.orderId, 10) : undefined,
       customerId: options.customerId ? parseInt(options.customerId, 10) : undefined,
+      email: options.email,
+      transactionMethod: options.transactionMethod,
+      currency: options.currency,
+      amountFrom: options.amountFrom ? parseFloat(options.amountFrom) : undefined,
+      amountTo: options.amountTo ? parseFloat(options.amountTo) : undefined,
+      transactionType: options.transactionType,
+      transactionStatus: options.transactionStatus,
+      dateType: options.dateType,
+      createdAtFrom: options.createdAtFrom,
+      createdAtTo: options.createdAtTo,
+      source: options.source,
+      cardType: options.cardType,
+      cardNumber: options.cardNumber,
+      country: options.country,
       ...getPaginationParams(options),
     });
     printJson(result);
@@ -316,4 +435,8 @@ transactions
     }),
   );
 
-program.parse(process.argv);
+if (require.main === module) {
+  program.parse(process.argv);
+}
+
+export { program };
