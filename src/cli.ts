@@ -20,7 +20,8 @@ program
   .requiredOption('--secret-key <key>', 'xMoney Secret Key', (value) => {
     if (!isValidSecretKey(value)) {
       console.error(
-        `error: option '--secret-key <key>' argument '${value}' is invalid. It must start with 'sk_${TEST_ENV}_' or 'sk_${LIVE_ENV}_'.`,
+        `error: option '--secret-key <key>' argument '${value}' is invalid. ` +
+        `It must start with 'sk_${TEST_ENV}_' or 'sk_${LIVE_ENV}_'.`,
       );
       process.exit(1);
     }
