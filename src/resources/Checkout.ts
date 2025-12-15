@@ -1,5 +1,6 @@
 import { XMoney } from '../XMoney';
 import { getBase64JsonRequest, getBase64Checksum } from '../utils';
+import { OrderCreateRequest } from './Orders';
 
 export class Checkout {
   private client: XMoney;
@@ -13,7 +14,7 @@ export class Checkout {
    * @param orderInput The order data.
    * @returns The HTML string containing the auto-submitting form.
    */
-  public createHosted(orderInput: any): string {
+  public createHosted(orderInput: OrderCreateRequest): string {
     const secureUrl = this.client.getSecureBaseUrl();
 
     // Prepare order data

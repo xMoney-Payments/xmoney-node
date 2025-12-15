@@ -58,7 +58,28 @@ describe('Orders Resource', () => {
 
             await orders.rebill(id, data);
 
-            expect(sdk.request).toHaveBeenCalledWith('POST', `/order-rebill/${id}`, data);
+            expect(sdk.request).toHaveBeenCalledWith('PATCH', `/order-rebill/${id}`, data);
+        });
+    });
+
+    describe('cancel', () => {
+        it('should call request with correct params', async () => {
+            const id = 123;
+            const params: any = { reason: 'customer-demand', message: 'Requested by user', terminateOrder: 'yes' };
+            (sdk as any).request.mockResolvedValue(undefined);
+
+            await orders.cancel(id, params);
+
+            expect(sdk.request).toHaveBeenCalledWith('DELETE', `/order/${id}`, params);
+        });
+
+        it('should call request without params when optional', async () => {
+            const id = 123;
+            (sdk as any).request.mockResolvedValue(undefined);
+
+            await orders.cancel(id);
+
+            expect(sdk.request).toHaveBeenCalledWith('DELETE', `/order/${id}`, undefined);
         });
     });
 });

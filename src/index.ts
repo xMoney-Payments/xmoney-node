@@ -1,9 +1,4 @@
-export {
-    APIResponse,
-    Pagination,
-    WebhookPayload,
-    TransactionStatus
-} from './types';
+export { APIResponse, Pagination, WebhookPayload, TransactionStatus } from './types';
 export { XMoney } from './XMoney';
 export { Orders, Order, OrderListParams } from './resources/Orders';
 export { Transactions, Transaction, TransactionListParams } from './resources/Transactions';

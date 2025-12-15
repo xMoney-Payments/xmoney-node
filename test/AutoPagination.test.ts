@@ -1,5 +1,5 @@
 import { XMoney } from '../src/XMoney';
-import { Cards } from '../src/resources/Cards';
+
 import axios from 'axios';
 
 jest.mock('axios');

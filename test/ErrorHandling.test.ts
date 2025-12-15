@@ -83,7 +83,11 @@ describe('Error Handling', () => {
         const error = {
             response: {
                 status: 400,
-                data: { message: 'Bad Request' }
+                data: {
+                    code: 400,
+                    message: 'Bad Request',
+                    errors: []
+                }
             }
         };
 
@@ -94,7 +98,11 @@ describe('Error Handling', () => {
         const error = {
             response: {
                 status: 401,
-                data: { message: 'Unauthorized' }
+                data: {
+                    code: 401,
+                    message: 'Unauthorized',
+                    errors: []
+                }
             }
         };
 
@@ -125,7 +133,14 @@ describe('Error Handling', () => {
             response: {
                 status: 400,
                 data: {
-                    error: [{ message: 'Specific error' }]
+                    code: 400,
+                    message: 'Bad Request',
+                    errors: [{
+                        code: 1651,
+                        message: 'Specific error',
+                        type: 'Validation',
+                        field: 'email'
+                    }]
                 }
             }
         };
@@ -134,7 +149,8 @@ describe('Error Handling', () => {
             (sdk as any).handleError(error);
         } catch (e: any) {
             expect(e).toBeInstanceOf(InvalidRequestError);
-            expect(e.message).toBe('Specific error');
+            expect(e.errors[0].message).toBe('Specific error');
+            expect(e.statusCode).toBe(400);
         }
     });
 });
